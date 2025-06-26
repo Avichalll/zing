@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Generator - Logo Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        button {
+            padding: 12px 24px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            flex: 1;
+            min-width: 200px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 30px;
+            text-align: center;
+        }
+        .qr-container {
+            display: inline-block;
+            margin: 10px;
+            padding: 20px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .qr-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+        }
+        .error {
+            color: red;
+            background-color: #ffe6e6;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .success {
+            color: green;
+            background-color: #e6ffe6;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .comparison {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 KCare QR Code Generator - Logo Test</h1>
+        
+        <div class="form-group">
+            <label for="text">Text to encode:</label>
+            <input type="text" id="text" value="https://kcare.com" placeholder="Enter text or URL">
+        </div>
+        
+        <div class="form-group">
+            <label for="size">QR Code Size:</label>
+            <select id="size">
+                <option value="200">200x200</option>
+                <option value="300" selected>300x300</option>
+                <option value="400">400x400</option>
+                <option value="500">500x500</option>
+                <option value="600">600x600</option>
+            </select>
+        </div>
+        
+        <div class="button-group">
+            <button onclick="testLogo()">🔧 Test Logo System</button>
+            <button onclick="generateColorTest()">🎨 Test Original Colors</button>
+            <button onclick="generateTestVisible()">🎯 Force Visible Logo Test</button>
+            <button onclick="generateQR(false)">📱 Generate Standard QR</button>
+            <button onclick="generateQR(true)">🎨 Generate QR with Logo</button>
+            <button onclick="compareQR()">🔍 Compare Both</button>
+        </div>
+        
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        const baseUrl = 'http://localhost:8080/api/v1/qr';
+        
+        function testLogo() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<p>Testing logo system...</p>';
+            
+            fetch(`${baseUrl}/qrcode/test/logo`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        resultDiv.innerHTML = `
+                            <div class="success">
+                                <h3>✅ Logo Test Successful!</h3>
+                                <p><strong>Status:</strong> ${data.status}</p>
+                                <p><strong>Message:</strong> ${data.message}</p>
+                                <p><strong>QR Code Size:</strong> ${data.qrCodeSize} bytes</p>
+                                <p><strong>Timestamp:</strong> ${new Date(data.timestamp).toLocaleString()}</p>
+                            </div>
+                        `;
+                    } else {
+                        resultDiv.innerHTML = `
+                            <div class="error">
+                                <h3>❌ Logo Test Failed</h3>
+                                <p><strong>Error:</strong> ${data.error}</p>
+                                <p><strong>Message:</strong> ${data.message}</p>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h3>❌ Connection Error</h3>
+                            <p>Could not connect to the server. Make sure the application is running on port 8080.</p>
+                            <p><strong>Error:</strong> ${error.message}</p>
+                        </div>
+                    `;
+                });
+        }
+        
+        function generateQR(withLogo) {
+            const text = document.getElementById('text').value;
+            const size = document.getElementById('size').value;
+            const resultDiv = document.getElementById('result');
+            
+            if (!text.trim()) {
+                resultDiv.innerHTML = '<div class="error">Please enter text to encode</div>';
+                return;
+            }
+            
+            const endpoint = withLogo ? 'qrcode/png/logo' : 'qrcode/png';
+            const params = new URLSearchParams({
+                text: text,
+                width: size,
+                height: size
+            });
+            
+            if (withLogo) {
+                params.append('withLogo', 'true');
+            }
+            
+            const url = `${baseUrl}/${endpoint}?${params}`;
+            const title = withLogo ? 'QR Code with KCare Logo' : 'Standard QR Code';
+            
+            resultDiv.innerHTML = `
+                <div class="qr-container">
+                    <div class="qr-title">${title}</div>
+                    <img src="${url}" alt="${title}" />
+                    <p><small>Size: ${size}x${size}px</small></p>
+                    <p><small><a href="${url}" target="_blank">Download</a></small></p>
+                </div>
+            `;
+        }
+        
+        function compareQR() {
+            const text = document.getElementById('text').value;
+            const size = document.getElementById('size').value;
+            const resultDiv = document.getElementById('result');
+            
+            if (!text.trim()) {
+                resultDiv.innerHTML = '<div class="error">Please enter text to encode</div>';
+                return;
+            }
+            
+            const params = new URLSearchParams({
+                text: text,
+                width: size,
+                height: size
+            });
+            
+            const standardUrl = `${baseUrl}/qrcode/png?${params}`;
+            const logoUrl = `${baseUrl}/qrcode/png/logo?${params}&withLogo=true`;
+            
+            resultDiv.innerHTML = `
+                <div class="comparison">
+                    <div class="qr-container">
+                        <div class="qr-title">📱 Standard QR Code</div>
+                        <img src="${standardUrl}" alt="Standard QR Code" />
+                        <p><small>Size: ${size}x${size}px</small></p>
+                        <p><small><a href="${standardUrl}" target="_blank">Download PNG</a></small></p>
+                    </div>
+                    <div class="qr-container">
+                        <div class="qr-title">🎨 QR Code with KCare Logo</div>
+                        <img src="${logoUrl}" alt="QR Code with Logo" />
+                        <p><small>Size: ${size}x${size}px</small></p>
+                        <p><small><a href="${logoUrl}" target="_blank">Download PNG</a></small></p>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function generateTestVisible() {
+            const text = document.getElementById('text').value || 'LOGO TEST';
+            const size = document.getElementById('size').value;
+            const resultDiv = document.getElementById('result');
+            
+            const url = `${baseUrl}/qrcode/test/visible-logo?text=${encodeURIComponent(text)}&width=${size}&height=${size}`;
+            
+            resultDiv.innerHTML = `
+                <div class="qr-container">
+                    <div class="qr-title">🎯 Logo Visibility Test</div>
+                    <img src="${url}" alt="Test QR with Visible Logo" />
+                    <p><small>This should show a YELLOW background with your KCare logo or "KCare" text</small></p>
+                    <p><small>Size: ${size}x${size}px</small></p>
+                    <p><small><a href="${url}" target="_blank">Download</a></small></p>
+                </div>
+            `;
+        }
+        
+        function generateColorTest() {
+            const text = document.getElementById('text').value || 'KCare Color Test';
+            const size = document.getElementById('size').value;
+            const resultDiv = document.getElementById('result');
+            
+            const url = `${baseUrl}/qrcode/test/colors?text=${encodeURIComponent(text)}&width=${size}&height=${size}`;
+            
+            resultDiv.innerHTML = `
+                <div class="qr-container">
+                    <div class="qr-title">🎨 Original Colors Test</div>
+                    <img src="${url}" alt="QR with Original Logo Colors" />
+                    <p><small>This should show your KCare logo in its ORIGINAL COLORS</small></p>
+                    <p><small>QR pattern remains black, logo keeps its colors</small></p>
+                    <p><small>Size: ${size}x${size}px</small></p>
+                    <p><small><a href="${url}" target="_blank">Download</a></small></p>
+                </div>
+            `;
+        }
+        
+        // Test connection on page load
+        window.onload = function() {
+            fetch(`${baseUrl}/qrcode/test/logo`)
+                .then(response => {
+                    if (response.ok) {
+                        console.log('✅ Server connection successful');
+                    } else {
+                        console.warn('⚠️ Server responded with error:', response.status);
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Could not connect to server:', error.message);
+                    document.getElementById('result').innerHTML = `
+                        <div class="error">
+                            <h3>⚠️ Server Connection Issue</h3>
+                            <p>Make sure the Spring Boot application is running on <strong>http://localhost:8080</strong></p>
+                            <p>Run the application with: <code>mvn spring-boot:run</code></p>
+                        </div>
+                    `;
+                });
+        };
+    </script>
+</body>
+</html>
